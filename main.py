@@ -1,8 +1,12 @@
 import pytesseract
+from gtts import gTTS
+import os
 import fitz  # PyMuPDF
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
+import pygame
+
 class PDFViewerApp:
     def __init__(self, root):
         self.root = root
@@ -96,13 +100,17 @@ class PDFViewerApp:
             image_qt = Image.frombytes("RGB", [image.width, image.height], image.samples)
             cropped_image = image_qt.crop((x0, y0, x1, y1))
 
-            save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG Files", "*.png")])
-            if save_path:
-                cropped_image.save(save_path)
-                image_file_path = 'output_image.png'
+            # save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG Files", "*.png")])
+            #if save_path:
+            cropped_image.save('output_image.png')
+            image_file_path = 'output_image.png'
 
-                extracted_text = read_text_from_image(image_file_path)
-                print(extracted_text)
+            extracted_text = read_text_from_image(image_file_path)
+            print(extracted_text)
+            filename = 'output.mp3'
+            text_to_speech(extracted_text, filename=filename)
+
+            play_audio(filename)
 
 
 
@@ -132,7 +140,15 @@ def read_text_from_image(image_path):
     text = pytesseract.image_to_string(image)
 
     return text
+def text_to_speech(text, language='en', filename='output.mp3'):
+    tts = gTTS(text=text, lang=language, slow=False)
+    tts.save(filename)
+    # os.system(f"start {filename}")  # This will play the saved speech file using the default audio player
 
+def play_audio(filename):
+    pygame.mixer.init()
+    pygame.mixer.music.load(filename)
+    pygame.mixer.music.play()
 if __name__ == "__main__":
     root = tk.Tk()
     app = PDFViewerApp(root)
