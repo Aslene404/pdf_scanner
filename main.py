@@ -10,7 +10,15 @@ class PDFViewerApp:
         self.root.geometry("800x600")
 
         self.canvas = tk.Canvas(self.root)
-        self.canvas.pack(expand=True, fill=tk.BOTH)
+        # self.canvas.pack(expand=True, fill=tk.BOTH)
+        # making the window scrollable
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar = tk.Scrollbar(root, command=self.canvas.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.canvas.configure(yscrollcommand=scrollbar.set)
+        self.canvas.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
         self.canvas.bind("<ButtonPress-1>", self.on_press)
         self.canvas.bind("<B1-Motion>", self.on_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_release)
