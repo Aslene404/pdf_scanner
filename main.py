@@ -147,7 +147,9 @@ def read_text_from_image(image_path):
     # Open the image using PIL (Python Imaging Library)
     image = Image.open(image_path)
     #config path
-    pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
+    # r'C:\Program Files\Tesseract-OCR\tesseract.exe' for Aslene
+    # r'/usr/bin/tesseract' for Rihem
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
     # Perform OCR to extract text from the image
     text = pytesseract.image_to_string(image)
@@ -155,13 +157,17 @@ def read_text_from_image(image_path):
     return text
 def text_to_speech(text, language='en', filename='output.mp3'):
     tts = gTTS(text=text, lang=language, slow=False)
+    pygame.mixer.quit() # quit the previous audio so we can make another one
     tts.save(filename)
     # os.system(f"start {filename}")  # This will play the saved speech file using the default audio player
 
 def play_audio(filename):
     pygame.mixer.init()
+
     pygame.mixer.music.load(filename)
     pygame.mixer.music.play()
+
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = PDFViewerApp(root)
