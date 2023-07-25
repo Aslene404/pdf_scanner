@@ -83,10 +83,21 @@ class PDFViewerApp:
         self.selection_start = (event.x, event.y)
 
     def on_drag(self, event):
-        x, y = event.x, event.y
-        if self.selection_rect:
-            self.canvas.delete(self.selection_rect)
-        self.selection_rect = self.canvas.create_rectangle(self.selection_start[0], self.selection_start[1], x, y, outline="red", width=2)
+       x, y = event.x, event.y
+       if self.selection_rect:
+           self.canvas.delete(self.selection_rect)
+
+       x0, y0 = self.selection_start
+       x1, y1 = x, y
+
+       if x < x0:  # If dragging from right to left, adjust coordinates
+           x0, x1 = x, x0
+
+       if y < y0:  # If dragging from bottom to top, adjust coordinates
+           y0, y1 = y, y0
+
+       self.selection_rect = self.canvas.create_rectangle(x0, y0, x1, y1, outline="red", width=2)
+
 
     def on_release(self, event):
         x0, y0 = self.selection_start
@@ -98,6 +109,8 @@ class PDFViewerApp:
             image = page.get_pixmap()
 
             image_qt = Image.frombytes("RGB", [image.width, image.height], image.samples)
+            x0, x1 = min(x0, x1), max(x0, x1)
+            y0, y1 = min(y0, y1), max(y0, y1)
             cropped_image = image_qt.crop((x0, y0, x1, y1))
 
             # save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG Files", "*.png")])
@@ -134,7 +147,7 @@ def read_text_from_image(image_path):
     # Open the image using PIL (Python Imaging Library)
     image = Image.open(image_path)
     #config path
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
 
     # Perform OCR to extract text from the image
     text = pytesseract.image_to_string(image)
