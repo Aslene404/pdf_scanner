@@ -1,11 +1,16 @@
 import pytesseract
 from gtts import gTTS
-import os
+#import os
 import fitz  # PyMuPDF
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import pygame
+from tkinter import simpledialog
+#from PyPDF2 import PdfReader, PdfWriter
+#from PyPDF2.generic import AnnotationBuilder
+from tkinter import messagebox
+import shutil
 
 class PDFViewerApp:
     def __init__(self, root):
@@ -16,6 +21,7 @@ class PDFViewerApp:
         self.canvas = tk.Canvas(self.root)
         # self.canvas.pack(expand=True, fill=tk.BOTH)
         # making the window scrollable
+
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar = tk.Scrollbar(root, command=self.canvas.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -31,6 +37,13 @@ class PDFViewerApp:
         self.selection_start = None
         self.pdf_document = None
         self.page_number = 0
+       
+       
+        ####################### for annotation ###############################
+        self.my_i=None
+        self.pdfPath=None
+        ####################### for annotation ###############################
+
 
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
@@ -50,12 +63,17 @@ class PDFViewerApp:
     def open_pdf(self):
         file_path = filedialog.askopenfilename(filetypes=[("PDF Files", "*.pdf"), ("All Files", "*.*")])
         if file_path:
-            self.load_pdf_document(file_path)
+            print("-------------------------file_path----------------------:",file_path)
+            self.pdfPath=file_path
+            self.load_pdf_document(file_path, 0)
 
-    def load_pdf_document(self, file_path):
+  
+  
+    def load_pdf_document(self,file_path, pageNumber):
         self.pdf_document = fitz.open(file_path)
-        self.page_number = 0
+        self.page_number = pageNumber
         self.show_page()
+
 
     def show_page(self):
         if self.pdf_document is not None:
@@ -75,7 +93,7 @@ class PDFViewerApp:
             self.show_page()
 
     def show_next_page(self):
-        if self.pdf_document is not None and self.page_number < len(self.pdf_document) - 1:
+        if  self.pdf_document is not None and self.page_number < len(self.pdf_document) - 1:
             self.page_number += 1
             self.show_page()
 
@@ -102,7 +120,9 @@ class PDFViewerApp:
     def on_release(self, event):
         x0, y0 = self.selection_start
         x1, y1 = event.x, event.y
-        self.canvas.delete(self.selection_rect)
+
+        print ("xxxet ygeeet :", x0,y0,x1,y1)
+        #self.canvas.delete(self.selection_rect)
 
         if self.pdf_document is not None:
             page = self.pdf_document.load_page(self.page_number)
@@ -115,15 +135,33 @@ class PDFViewerApp:
 
             # save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG Files", "*.png")])
             #if save_path:
+          
             cropped_image.save('output_image.png')
             image_file_path = 'output_image.png'
 
             extracted_text = read_text_from_image(image_file_path)
-            print(extracted_text)
+            ####################### for annotation ###############################     
+            self.my_i = simpledialog.askstring("Input"," Add annotation", parent=self.canvas)
+            print(self.my_i)    
+            if self.my_i : 
+               messagebox.showinfo("Success", "Annotations added successfully!")
+            
+            point = fitz.Point(x0, y0)  # top-left coordinates of the icon
+            annot = page.add_text_annot(point,self.my_i)
+            self.pdf_document.save("annotatedPdf.pdf")   # save changes in a new file
+            shutil.move("annotatedPdf.pdf", self.pdfPath) # move changes from annotatedPdf.pdf to the original file
+            self.load_pdf_document(self.pdfPath,self.page_number)
+            self.show_page()
+            
+            ####################### added by me ###############################
+
+            print("------------- extracted_text -----------> ",extracted_text)
             filename = 'output.mp3'
             text_to_speech(extracted_text, filename=filename)
-
             play_audio(filename)
+
+    
+
 
 
 
@@ -143,18 +181,26 @@ def convert_pdf_page_to_png(pdf_path, page_number, output_path):
     # Close the PDF document
     pdf_document.close()
 
+
 def read_text_from_image(image_path):
     # Open the image using PIL (Python Imaging Library)
     image = Image.open(image_path)
     #config path
     # r'C:\Program Files\Tesseract-OCR\tesseract.exe' for Aslene
     # r'/usr/bin/tesseract' for Rihem
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+ 
+    #pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    pytesseract.pytesseract.tesseract_cmd =  r'/usr/bin/tesseract'
+
+
 
     # Perform OCR to extract text from the image
     text = pytesseract.image_to_string(image)
+    print("----------------------text------------------ :", text)
 
     return text
+
+
 def text_to_speech(text, language='en', filename='output.mp3'):
     tts = gTTS(text=text, lang=language, slow=False)
     pygame.mixer.quit() # quit the previous audio so we can make another one
