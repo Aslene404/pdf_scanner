@@ -153,7 +153,7 @@ class PDFViewerApp:
             self.load_pdf_document(self.pdfPath,self.page_number)
             self.show_page()
             
-            ####################### added by me ###############################
+            ####################### for annotation  ###############################
 
             print("------------- extracted_text -----------> ",extracted_text)
             filename = 'output.mp3'
